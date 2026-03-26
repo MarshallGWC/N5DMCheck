@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attainmap — N5 Design &amp; Manufacture Prelim Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --green:#1a7a42;--green-light:#dcf5e8;--green-mid:#2a9a55;
+  --amber:#b45309;--amber-light:#fef3c7;
+  --red:#c53030;--red-light:#fff0f0;
+  --ink:#1a1f36;--ink-mid:#4a5568;--ink-light:#8896a5;
+  --bg:#f0f4f8;--surface:#fff;--surface-2:#f7fafc;
+  --border:#e2e8f0;--border-mid:#cbd5e0;
+  --radius:10px;--radius-sm:6px;--radius-lg:16px;
+  --shadow:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:0 10px 30px rgba(0,0,0,0.1),0 4px 8px rgba(0,0,0,0.06);
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  /* D&M colour: teal/dark-cyan */
+  --subject:#7c3aed;--subject-light:#f3e8ff;--subject-mid:#a78bfa;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.6;}
+
+.header{background:var(--surface);border-bottom:2px solid var(--border-mid);padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.logo{display:flex;align-items:center;gap:0.5rem;text-decoration:none;}
+.logo-text{font-size:1.1rem;font-weight:800;color:var(--subject);letter-spacing:-0.02em;}
+.header-sub{font-size:0.78rem;color:var(--ink-light);margin-left:auto;}
+
+.main{max-width:780px;margin:0 auto;padding:2rem 1.25rem;}
+
+.card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;margin-bottom:1.5rem;}
+.card-header{background:var(--subject);color:white;padding:1.25rem 1.5rem;}
+.card-header h1{font-size:1.2rem;font-weight:700;margin-bottom:0.15rem;}
+.card-header p{font-size:0.78rem;opacity:0.8;}
+.card-body{padding:1.5rem;}
+
+.name-step{text-align:center;padding:2.5rem 1.5rem;}
+.name-step h2{font-size:1.4rem;font-weight:700;margin-bottom:0.5rem;}
+.name-step p{color:var(--ink-mid);margin-bottom:1.5rem;font-size:0.9rem;}
+.name-input{width:100%;max-width:320px;padding:0.75rem 1rem;border:2px solid var(--border-mid);border-radius:var(--radius);font-size:1rem;font-family:var(--font);outline:none;text-align:center;transition:border-color 0.15s;}
+.name-input:focus{border-color:var(--subject);}
+.btn-start{margin-top:1rem;padding:0.75rem 2rem;background:var(--subject);color:white;border:none;border-radius:var(--radius);font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;}
+.btn-start:hover{background:var(--subject-mid);transform:translateY(-1px);box-shadow:var(--shadow);}
+
+.section-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-light);font-family:var(--mono);font-weight:600;margin-bottom:0.75rem;}
+.questions-grid{display:flex;flex-direction:column;gap:0;}
+.q-row{display:grid;grid-template-columns:80px 1fr 90px;align-items:center;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid var(--border);}
+.q-row:last-child{border-bottom:none;}
+.q-label{font-family:var(--mono);font-size:0.78rem;font-weight:600;color:var(--ink);}
+.q-spec-cell{display:flex;flex-direction:column;gap:0.1rem;min-width:0;}
+.q-spec{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--subject);}
+.q-spec-desc{font-size:0.72rem;color:var(--ink-mid);line-height:1.3;}
+.q-entry{display:flex;align-items:center;gap:0.4rem;justify-content:flex-end;}
+.q-input{width:52px;padding:0.3rem 0.4rem;border:1.5px solid var(--border-mid);border-radius:var(--radius-sm);font-size:0.88rem;font-family:var(--mono);font-weight:600;text-align:center;outline:none;transition:border-color 0.15s;}
+.q-input:focus{border-color:var(--subject);}
+.q-input.over{border-color:var(--red);background:var(--red-light);}
+.q-max{font-size:0.7rem;color:var(--ink-light);font-family:var(--mono);white-space:nowrap;}
+
+.progress-bar-wrap{background:var(--border);border-radius:100px;height:6px;margin:1rem 0;}
+.progress-bar-fill{height:6px;border-radius:100px;background:var(--subject);transition:width 0.3s;}
+
+.totals-row{display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1rem;background:var(--surface-2);border-radius:var(--radius);margin-top:1rem;}
+.total-score{font-size:1.4rem;font-weight:800;font-family:var(--mono);color:var(--subject);}
+.total-pct{font-size:0.85rem;color:var(--ink-mid);}
+
+.btn-report{width:100%;margin-top:1.25rem;padding:0.85rem;background:var(--subject);color:white;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:0.5rem;}
+.btn-report:hover{background:var(--subject-mid);}
+.btn-report:disabled{background:var(--border-mid);cursor:not-allowed;}
+
+.result-banner{background:var(--subject);color:white;padding:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;}
+.result-name{font-size:1.3rem;font-weight:700;margin-bottom:0.2rem;}
+.result-meta{font-size:0.78rem;opacity:0.75;}
+.result-pct{font-size:2.8rem;font-weight:300;line-height:1;font-family:var(--font);}
+.result-marks{font-size:0.72rem;opacity:0.7;text-align:right;}
+.grade-badge{display:none;}
+
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);}
+.summary-cell{padding:1rem 1.25rem;text-align:center;border-right:1px solid var(--border);}
+.summary-cell:last-child{border-right:none;}
+.summary-num{font-size:1.8rem;font-weight:300;line-height:1;margin-bottom:0.2rem;}
+.summary-label{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-light);font-family:var(--mono);}
+
+.charts-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.chart-cell{padding:1.25rem;min-width:0;}
+.chart-cell:first-child{border-right:1px solid var(--border);}
+.chart-cell canvas{max-height:220px!important;width:100%!important;}
+.chart-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--ink-light);font-family:var(--mono);margin-bottom:0.75rem;}
+
+.topic-bar-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;}
+.topic-bar-label{font-size:0.72rem;color:var(--ink-mid);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topic-bar-track{flex:1;height:8px;background:var(--border);border-radius:100px;overflow:hidden;}
+.topic-bar-fill{height:8px;border-radius:100px;transition:width 0.6s ease;}
+.topic-bar-pct{font-size:0.7rem;font-family:var(--mono);font-weight:600;width:32px;text-align:right;flex-shrink:0;}
+
+.acc-section{border-bottom:1px solid var(--border);}
+.acc-header{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1.25rem;cursor:pointer;background:white;transition:background 0.15s;user-select:none;}
+.acc-header:hover{background:var(--surface-2);}
+.acc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.acc-dot.green{background:var(--green);}
+.acc-dot.amber{background:var(--amber);}
+.acc-dot.red{background:var(--red);}
+.acc-title{flex:1;}
+.acc-title-top{display:flex;align-items:baseline;gap:0.5rem;}
+.acc-code{font-family:var(--mono);font-size:0.68rem;font-weight:600;color:var(--ink-light);}
+.acc-name{font-size:0.88rem;font-weight:600;}
+.acc-bar-row{margin-top:0.3rem;height:4px;background:var(--border);border-radius:100px;overflow:hidden;}
+.acc-bar-fill{height:4px;border-radius:100px;}
+.acc-bar-fill.green{background:var(--green);}
+.acc-bar-fill.amber{background:var(--amber);}
+.acc-bar-fill.red{background:var(--red);}
+.acc-pct{font-family:var(--mono);font-size:1rem;font-weight:700;text-align:right;flex-shrink:0;margin-right:0.5rem;}
+.acc-pct.green{color:var(--green);}
+.acc-pct.amber{color:var(--amber);}
+.acc-pct.red{color:var(--red);}
+.acc-status{font-size:0.62rem;padding:0.1rem 0.45rem;border-radius:100px;font-family:var(--mono);}
+.acc-status.green{background:var(--green-light);color:var(--green);}
+.acc-status.amber{background:var(--amber-light);color:var(--amber);}
+.acc-status.red{background:var(--red-light);color:var(--red);}
+.acc-chevron{width:14px;height:14px;stroke:var(--ink-light);fill:none;stroke-width:2.5;flex-shrink:0;transition:transform 0.2s;}
+.acc-body{display:none;}
+.acc-body.open{display:block;}
+
+.outcome-row{display:grid;grid-template-columns:1fr auto;align-items:flex-start;gap:0.75rem;padding:0.7rem 1rem 0.7rem 2.5rem;border-top:1px solid rgba(0,0,0,0.05);}
+.outcome-code{font-family:var(--mono);font-size:0.66rem;font-weight:600;color:var(--ink-light);margin-bottom:0.1rem;}
+.outcome-desc{font-size:0.8rem;color:var(--ink);}
+.outcome-score{font-family:var(--mono);font-size:0.82rem;font-weight:700;text-align:right;flex-shrink:0;}
+.outcome-frac{font-size:0.62rem;color:var(--ink-light);font-family:var(--mono);}
+
+.pp-section{padding:0.6rem 1rem 0.75rem 2.5rem;border-top:1px solid rgba(0,0,0,0.04);background:var(--surface-2);}
+.pp-label{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;}
+.pp-label-text{font-size:0.72rem;font-weight:600;color:var(--subject);}
+.pp-pills{display:flex;flex-wrap:wrap;gap:0.5rem;}
+.pp-pill{display:inline-flex;align-items:stretch;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.10);}
+.pp-pill a{display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.65rem;font-size:0.76rem;font-weight:600;font-family:var(--font);text-decoration:none;transition:all 0.15s;}
+.pp-pill a.qp{border-right:1.5px solid rgba(0,0,0,0.12);}
+.pp-pill a.ms{background:rgba(255,255,255,0.55);color:#555;}
+.pp-pill a.ms:hover{background:#f5f3ff;color:var(--subject);}
+.pp-none{font-size:0.72rem;color:var(--ink-light);font-style:italic;}
+
+.resources-footer{padding:0.85rem 1.5rem;background:var(--surface-2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;}
+.res-links{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.res-link{font-size:0.72rem;color:var(--subject);text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;padding:0.2rem 0.55rem;border:1.5px solid var(--subject);border-radius:6px;background:white;font-weight:600;transition:all 0.15s;}
+.res-link:hover{background:var(--subject-light);}
+.res-link.dim{color:var(--ink-mid);border-color:var(--border-mid);}
+.res-link.dim:hover{background:var(--surface-2);}
+
+.btn-print{padding:0.5rem 1.1rem;background:var(--green);color:white;border:none;border-radius:var(--radius);font-size:0.78rem;font-weight:700;font-family:var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-print:hover{background:var(--green-mid);}
+
+.btn-retake{width:100%;padding:0.6rem;background:white;color:var(--subject);border:1.5px solid var(--subject);border-radius:var(--radius);font-size:0.85rem;font-weight:600;font-family:var(--font);cursor:pointer;margin-top:1rem;transition:all 0.15s;}
+.btn-retake:hover{background:var(--subject-light);}
+
+@media(max-width:560px){
+  .charts-row{grid-template-columns:1fr;}
+  .chart-cell:first-child{border-right:none;border-bottom:1px solid var(--border);}
+  .result-pct{font-size:2rem;}
+  .topic-bar-label{width:90px;font-size:0.65rem;}
+}
+
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .header,.btn-retake,.btn-report,.btn-print-wrap,
+  .acc-chevron,[onclick*="toggleAcc"],[onclick*="expandAll"],[onclick*="collapseAll"],
+  div[style*="expand"]{display:none!important;}
+  .main{padding:0!important;max-width:100%!important;}
+  body{background:white!important;font-size:9pt!important;}
+  @page{margin:1cm;size:A4;}
+  .acc-body{display:block!important;}
+  .card{box-shadow:none!important;border:1px solid #ddd!important;margin-bottom:0!important;}
+  .result-banner{padding:0.6rem 1rem!important;}
+  .result-name{font-size:11pt!important;}
+  .result-pct{font-size:18pt!important;}
+  .result-meta,.result-marks{font-size:7pt!important;}
+  .summary-cell{padding:0.4rem 0.5rem!important;}
+  .summary-num{font-size:14pt!important;}
+  .summary-label{font-size:6pt!important;}
+  .charts-row{grid-template-columns:180px 1fr!important;}
+  .chart-cell{padding:0.5rem 0.75rem!important;}
+  .chart-cell canvas{max-height:140px!important;}
+  .chart-title{font-size:6pt!important;margin-bottom:0.3rem!important;}
+  .topic-bar-row{margin-bottom:0.2rem!important;}
+  .topic-bar-label{font-size:6.5pt!important;width:100px!important;}
+  .topic-bar-track{height:5px!important;}
+  .topic-bar-fill{height:5px!important;}
+  .topic-bar-pct{font-size:6.5pt!important;}
+  #acc-instruction-bar{display:none!important;}
+  .acc-header{padding:0.35rem 0.75rem!important;}
+  .acc-name{font-size:8pt!important;}
+  .acc-code{font-size:6.5pt!important;}
+  .acc-pct{font-size:8pt!important;}
+  .acc-status{font-size:6pt!important;padding:0.05rem 0.3rem!important;}
+  .acc-bar-row{margin-top:0.15rem!important;height:3px!important;}
+  .acc-dot{width:6px!important;height:6px!important;}
+  .outcome-row{padding:0.3rem 0.5rem 0.3rem 1.5rem!important;gap:0.5rem!important;}
+  .outcome-code{font-size:6pt!important;}
+  .outcome-desc{font-size:7.5pt!important;line-height:1.2!important;}
+  .outcome-score{font-size:7.5pt!important;}
+  .pp-section{padding:0.25rem 0.5rem 0.35rem 1.5rem!important;}
+  .pp-label{margin-bottom:0.25rem!important;}
+  .pp-pills{gap:0.3rem!important;}
+  .pp-pill a{padding:0.15rem 0.4rem!important;font-size:7pt!important;}
+  .resources-footer{padding:0.5rem 0.75rem!important;}
+  .res-link{font-size:7pt!important;padding:0.1rem 0.35rem!important;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="10" width="24" height="22" rx="2" fill="#e2e8f0"/>
+        <rect x="5" y="10" width="24" height="22" rx="2" stroke="#cbd5e0" stroke-width="1"/>
+        <rect x="5" y="10" width="5" height="22" rx="1" fill="#cbd5e0"/>
+        <circle cx="7.5" cy="16" r="1.5" fill="white"/>
+        <circle cx="7.5" cy="21" r="1.5" fill="white"/>
+        <circle cx="7.5" cy="26" r="1.5" fill="white"/>
+        <rect x="10" y="5" width="4" height="7" rx="1.5" fill="#1a7a42"/>
+        <rect x="15" y="3" width="4" height="9" rx="1.5" fill="#1558b0"/>
+        <rect x="20" y="5" width="4" height="7" rx="1.5" fill="#b91c1c"/>
+        <rect x="25" y="7" width="4" height="5" rx="1.5" fill="#b45309"/>
+        <line x1="12" y1="17" x2="26" y2="17" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="21" x2="26" y2="21" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="25" x2="26" y2="25" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="29" x2="22" y2="29" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    <span class="logo-text">Attainmap</span>
+  </div>
+  <span class="header-sub">N5 Design &amp; Manufacture · Prelim Revision</span>
+</div>
+
+<div class="main" id="app"></div>
+
+<script>
+// ── PRELIM QUESTIONS — George Watson's College N5 D&M 2026 ───────────────────
+// Each question mapped to its N5DM spec outcome code
+const QUESTIONS = [
+  // SECTION 1 — Q1 Toy train (24 marks)
+  { label:'Q1(a)(i)',    max:1, spec:'N5DM 6.2'  }, // Name a hardwood
+  { label:'Q1(a)(ii)',   max:2, spec:'N5DM 6.2'  }, // Two benefits of hardwoods
+  { label:'Q1(b)',       max:2, spec:'N5DM 6.4'  }, // Two alternative joints to finger joint
+  { label:'Q1(c)(i)',    max:2, spec:'N5DM 9.2'  }, // Two benefits of clear varnish
+  { label:'Q1(c)(ii)',   max:2, spec:'N5DM 9.1'  }, // Two stages preparing wood before varnish
+  { label:'Q1(d)(i)',    max:2, spec:'N5DM 7.5'  }, // Chamfering (taper turning) on centre lathe
+  { label:'Q1(d)(ii)',   max:2, spec:'N5DM 7.5'  }, // Parallel turning on centre lathe
+  { label:'Q1(d)(iii)',  max:2, spec:'N5DM 7.5'  }, // Two reasons for changing lathe speed
+  { label:'Q1(e)(i)',    max:2, spec:'N5DM 7.1'  }, // Two reasons for using aluminium
+  { label:'Q1(e)(ii)',   max:3, spec:'N5DM 10.4' }, // Three benefits of die casting
+  { label:'Q1(f)(i)',    max:2, spec:'N5DM 8.1'  }, // Suitable plastic for LEGO + reason
+  { label:'Q1(f)(ii)',   max:2, spec:'N5DM 10.10'}, // Two advantages of mass-production
+  // SECTION 2 — Q2–8
+  { label:'Q2(a)',       max:2, spec:'N5DM 10.1' }, // Two initial set-up costs of injection moulding
+  { label:'Q2(b)',       max:2, spec:'N5DM 10.1' }, // Two visual features indicating injection moulding
+  { label:'Q3(i)',       max:2, spec:'N5DM 5.4'  }, // Evaluation technique: ease of use
+  { label:'Q3(ii)',      max:2, spec:'N5DM 5.2'  }, // Evaluation technique: aesthetics
+  { label:'Q4(a)',       max:6, spec:'N5DM 5.3'  }, // Ergonomics (all 3 aspects) — vacuum cleaner
+  { label:'Q4(b)',       max:2, spec:'N5DM 11.3' }, // Impact of mass manufacturing on society
+  { label:'Q4(c)',       max:2, spec:'N5DM 10.9' }, // Two benefits of standard components
+  { label:'Q4(d)',       max:3, spec:'N5DM 11.2' }, // Three steps to reduce environmental impact
+  { label:'Q5',         max:2, spec:'N5DM 2.1'  }, // Name two idea generation techniques
+  { label:'Q6(a)',       max:2, spec:'N5DM 3.1'  }, // Reasons for using sketch model — coffee machine
+  { label:'Q6(b)',       max:2, spec:'N5DM 3.3'  }, // Reasons for using full scale model
+  { label:'Q6(c)',       max:2, spec:'N5DM 3.4'  }, // Two advantages of CAD over physical model
+  { label:'Q6(d)',       max:2, spec:'N5DM 3.1'  }, // Two physical modelling materials + why suitable
+  { label:'Q6(e)',       max:2, spec:'N5DM 3.2'  }, // One benefit of physical model
+  { label:'Q6(f)',       max:2, spec:'N5DM 10.7' }, // One advantage + one disadvantage of 3D printing
+  { label:'Q7(a)',       max:1, spec:'N5DM 10.3' }, // Manufacturing process: sandwich container
+  { label:'Q7(b)',       max:1, spec:'N5DM 10.4' }, // Manufacturing process: metal model van
+  { label:'Q7(c)',       max:1, spec:'N5DM 10.5' }, // Manufacturing process: turbocharger casing
+  { label:'Q7(d)',       max:1, spec:'N5DM 10.2' }, // Manufacturing process: kayak
+  { label:'Q7(e)',       max:1, spec:'N5DM 6.7'  }, // Manufacturing process: wooden candle sticks
+  // SECTION 3 — Q9–11
+  { label:'Q8(a)(i)',    max:2, spec:'N5DM 6.3'  }, // Two benefits of plywood for child's toy
+  { label:'Q8(a)(ii)',   max:1, spec:'N5DM 10.8' }, // One CAM method for cutting plywood
+  { label:'Q8(a)(iii)',  max:2, spec:'N5DM 10.8' }, // Two benefits of CAM to manufacturer
+  { label:'Q9(a)',       max:1, spec:'N5DM 8.1'  }, // Why trays made from ABS plastic
+  { label:'Q9(b)',       max:1, spec:'N5DM 7.1'  }, // Why hollow tubular steel for legs
+  { label:'Q10',        max:6, spec:'N5DM 8.4'  }, // Acrylic phone holder: cut, shape and finish
+  { label:'Q11(a)',      max:2, spec:'N5DM 8.1'  }, // Why polypropylene suitable for tableware
+  { label:'Q11(b)',      max:1, spec:'N5DM 8.1'  }, // Plastic group/category (thermoplastic)
+];
+
+// ── SPEC — N5 Design and Manufacture ─────────────────────────────────────────
+const SPEC = {
+  "DM1": { label:"Analysis of a Brief", outcomes:{
+    "N5DM 1.1":"Questionnaire — key stages: purpose/questions, target audience, trialling, distributing, collecting and analysing results",
+    "N5DM 1.2":"User trip — what information can be gained from personal interaction/experience with a product",
+    "N5DM 1.3":"Specification — purpose, how it is used to direct, evaluate and refine a design proposal during the design process",
+  }},
+  "DM2": { label:"Idea Generation Techniques", outcomes:{
+    "N5DM 2.1":"Brainstorming — key stages: communicate purpose, group activity, generate lots of ideas in a time limit, record all ideas, no idea too silly, build on each other's ideas, select most promising ideas",
+    "N5DM 2.2":"Morphological analysis — key stages: identify parameters for table headings, populate rows with attributes, choose combinations, generate ideas from results",
+  }},
+  "DM3": { label:"Modelling in the Design Process", outcomes:{
+    "N5DM 3.1":"Sketch models — benefits: quick to produce, low cost, 3D visualisation of ideas, easy to alter and refine, no specialist skill required, can be shown to others for feedback",
+    "N5DM 3.2":"Block models — benefits: better understanding of 3D form, test ergonomics and physical interaction, evaluate aesthetics, present to client, assess proportion",
+    "N5DM 3.3":"Scale models — benefits: test proportion of parts, explore sizes, check ergonomics, see product in 3D, designs can be altered and refined",
+    "N5DM 3.4":"Computer-generated models — benefits: communicate aesthetics/colour/texture/materials, easy to modify, present to client or use in marketing, generate machining files, easy to share electronically",
+  }},
+  "DM4": { label:"Graphics in the Design Process", outcomes:{
+    "N5DM 4.1":"Sketching — benefits for idea generation: quick to produce, communicates visually, easy to explore and evolve ideas, no specialist equipment, easy to change or discard",
+    "N5DM 4.2":"Working drawings — information conveyed: dimensions, orthographic views, exploded/assembly views, part names, materials, scaled details",
+    "N5DM 4.3":"Rendered pictorials — communicate aesthetics, colours, textures, proportion, materials; present to client; use in marketing",
+    "N5DM 4.4":"Exploded views — show alignment and assembly of parts, joining methods, individual parts, number of parts",
+  }},
+  "DM5": { label:"Design Factors", outcomes:{
+    "N5DM 5.1":"Function — primary and secondary function; how function influences aesthetics, ergonomics and materials; why function should be considered when designing",
+    "N5DM 5.2":"Aesthetics — elements: form, colour, shape, texture, line, proportion, symmetry, contrast, harmony, pattern, material, theme/style; evaluation techniques: comparison to other products",
+    "N5DM 5.3":"Ergonomics — anthropometrics (body dimensions, percentile data), physiology (force, weight, comfort, grip), psychology (colour cues, sound, visual information); evaluation technique: user trial",
+    "N5DM 5.4":"Performance — safety (no sharp edges, choking hazards, stability, non-toxic finish, secure fixings); maintenance (ease of cleaning, replaceable parts); fitness for purpose; evaluation techniques: user trial, comparison against specification",
+    "N5DM 5.5":"Market — target market, branding benefits (trust, loyalty, premium pricing, guaranteed sales); technology push and market pull; marketing techniques",
+    "N5DM 5.6":"People who influence design — designer/client, manufacturer, marketing team, retailer, consumer; their respective roles",
+  }},
+  "DM6": { label:"Wood: Materials, Joints and Adhesives", outcomes:{
+    "N5DM 6.1":"Softwoods — identification (red pine, spruce, cedar, douglas fir, larch); properties and uses",
+    "N5DM 6.2":"Hardwoods — identification (oak, ash, beech, mahogany); properties and uses; benefits over softwood (harder, more durable, better finish, aesthetically appealing)",
+    "N5DM 6.3":"Manufactured boards — types (plywood, MDF, hardboard, chipboard); benefits over solid timber (wide boards, no warping, smooth surface, cost-effective); suitable applications",
+    "N5DM 6.4":"Woodwork joints — housing, rebate, dowel, mortise and tenon, finger/box, rub, lap/halving, butt, biscuit, dovetail; selection, justification; marking out and cutting with reference to workshop tools",
+    "N5DM 6.5":"Checking for squareness — measuring diagonals, try/engineer's square in corners, trammel, template",
+    "N5DM 6.6":"Adhesives for wood — PVA (wood glue); epoxy resin for dissimilar materials; selection and justification",
+    "N5DM 6.7":"Wood lathe — parallel/step turning, taper turning, knurling, facing off, parting off; achieving a high-quality finish; marking out and removing corners of a blank",
+  }},
+  "DM7": { label:"Metal: Materials, Marking Out, Cutting and Forming", outcomes:{
+    "N5DM 7.1":"Non-ferrous metals — aluminium, brass, copper, zinc; properties (lightweight, corrosion resistant, easy to machine, suitable for casting) and suitability for given applications",
+    "N5DM 7.2":"Marking out metal — engineer's blue, steel rule, scriber, engineer's square, odd-leg callipers, spring dividers, centre punch; describing the process with reference to tools",
+    "N5DM 7.3":"Cutting and shaping metal — tin snips, junior hacksaw, hacksaw, coping saw, abrafile; hand tools for curves and internal shapes",
+    "N5DM 7.4":"Bending metal — bending bars in vice, mallet, box folder/bending machine; use of jig or former to check angle",
+    "N5DM 7.5":"Centre lathe — safety checks before use; processes: parallel/step turning, taper turning, chamfering, knurling, facing off, parting off; lathe speed considerations (material, diameter, finish); checking diameter with outside callipers",
+    "N5DM 7.6":"Threading — cutting external threads (die and die stock); cutting internal threads (tap and tap wrench); ensuring good quality thread",
+    "N5DM 7.7":"Metal finishes — paint (corrosion protection, appearance, durability); dip coating (even coat, ease of application, grip/texture)",
+  }},
+  "DM8": { label:"Plastics: Materials, Cutting, Drilling and Forming", outcomes:{
+    "N5DM 8.1":"Thermoplastics — acrylic, ABS, polypropylene (PP); properties and suitability; ABS: impact resistant, tough, easy to mould; PP: strong, waterproof, food safe, available in colours; identifying plastic group (thermoplastic)",
+    "N5DM 8.2":"Thermosets — melamine formaldehyde (MF); properties and suitability for given applications",
+    "N5DM 8.3":"Cutting and drilling plastics — coping saw, junior hacksaw, scroll/fret saw, abrafile for curves; twist drill, forstner/spade bit for holes; preventing cracking; drill before forming curved shapes",
+    "N5DM 8.4":"Finishing plastic edges — cross file, draw file, scrape, wet-and-dry paper (dry then wet), polish/buff, steel wool and soap; acrylic cutting, shaping and finishing in full sequence with reference to tools",
+    "N5DM 8.5":"Forming acrylic — strip heater/line bender to heat fold line; bending around a former; securing until cool; checking angle; why drill/prepare before forming",
+  }},
+  "DM9": { label:"Surface Finishing", outcomes:{
+    "N5DM 9.1":"Preparing wood for finishing — sanding through abrasive paper grades (coarse to fine), raising the grain (dampen and re-sand), removing dust and pencil marks; stages in sequence",
+    "N5DM 9.2":"Applying a brushed varnish finish — thin even coats, brush with grain, remove loose bristles, sand between coats, remove dust, multiple layers; benefits of clear varnish (protect, show grain, durable, easy to clean)",
+    "N5DM 9.3":"Drill bits — Forstner/spade bit (flat-bottomed holes); twist drill; countersink drill; ensuring correct drilling depth (depth stop, masking tape)",
+  }},
+  "DM10": { label:"Commercial Manufacture", outcomes:{
+    "N5DM 10.1":"Injection moulding — identifying features (injection mark, ejector pin marks, split lines, good surface finish, complex shapes); initial set-up costs (mould/tooling, machinery, training); suitability for mass production",
+    "N5DM 10.2":"Rotational moulding — identifying features (hollow item, uniform wall thickness, good surface finish, large-scale); reasons for suitability; materials used",
+    "N5DM 10.3":"Vacuum forming — identifying features (rounded/tapered sides, thin consistent wall, thinning in areas of most stretch); reasons for suitability",
+    "N5DM 10.4":"Die casting — identifying features (good surface finish, complex/detailed shapes, accuracy); reasons for suitability; benefits over sand casting",
+    "N5DM 10.5":"Sand casting — identifying features (rough/uneven surface, split lines, fillets, fettle/sprue marks, draft angles, low dimensional accuracy); reasons for suitability",
+    "N5DM 10.6":"Laser cutters — benefits: repeatability/consistency, accuracy, complex cutting, fast production, reduced waste, cutting internal shapes, etching/engraving, low labour, files direct from CAD",
+    "N5DM 10.7":"3D printing — benefits: no craft skill, direct from CAD, accurate and complex shapes, additive process (less waste), no tooling, easy to revise and reprint, flexible/low volume; disadvantages: slow, limited materials, cost",
+    "N5DM 10.8":"CAM (Computer-Aided Manufacture) — benefits: faster production, less labour, direct from CAD, accuracy, consistency, 24-hour running, reduced injuries; suitable CAM methods: laser cutter, CNC router, CNC milling",
+    "N5DM 10.9":"Standard components — benefits to manufacturer: standard sizes, reduce production time, cheaper than in-house, adaptable across products, consistent quality, easy to source, ease of maintenance/repair",
+    "N5DM 10.10":"Mass manufacture vs one-off production — advantages of mass production (lower cost per unit, faster, consistent quality, higher volumes); why one-off costs more; impact on society",
+  }},
+  "DM11": { label:"Sustainability and Environmental Impact", outcomes:{
+    "N5DM 11.1":"Sustainable design — methods: recyclable materials, reduce material used, reuse/repurpose, extend lifespan, design for disassembly, reduce packaging, biodegradable materials",
+    "N5DM 11.2":"Environmental impact of manufacture — energy consumption, pollution, deforestation, FSC certification, locally sourced materials, sustainable forestry, use of recycled materials",
+    "N5DM 11.3":"Impact of manufacturing technologies on workforce and society — reduction in labour/jobs, loss of traditional skills, retraining, cheaper products, throwaway culture, safer working environments",
+  }},
+};
+
+// ── PAST PAPER BANK — N5 D&M (SQA 2022–2025) ─────────────────────────────────
+const PAPER_BANK = [
+  // 2025
+  { year:'2025', ref:'Q1(a)(i)',    spec:'N5DM 6.3'  }, { year:'2025', ref:'Q1(a)(ii)',   spec:'N5DM 6.2'  },
+  { year:'2025', ref:'Q1(a)(iii)', spec:'N5DM 6.2'  }, { year:'2025', ref:'Q1(b)',        spec:'N5DM 6.4'  },
+  { year:'2025', ref:'Q1(c)(i)',   spec:'N5DM 9.3'  }, { year:'2025', ref:'Q1(c)(ii)',   spec:'N5DM 9.3'  },
+  { year:'2025', ref:'Q1(d)(i)',   spec:'N5DM 6.4'  }, { year:'2025', ref:'Q1(d)(ii)',   spec:'N5DM 6.5'  },
+  { year:'2025', ref:'Q1(e)(i)',   spec:'N5DM 9.2'  }, { year:'2025', ref:'Q1(e)(ii)',   spec:'N5DM 9.2'  },
+  { year:'2025', ref:'Q1(f)(i)',   spec:'N5DM 7.1'  }, { year:'2025', ref:'Q1(f)(ii)',   spec:'N5DM 7.5'  },
+  { year:'2025', ref:'Q1(f)(iii)', spec:'N5DM 7.5'  }, { year:'2025', ref:'Q1(g)(i)',    spec:'N5DM 8.3'  },
+  { year:'2025', ref:'Q1(g)(ii)',  spec:'N5DM 8.3'  }, { year:'2025', ref:'Q1(g)(iii)',  spec:'N5DM 8.4'  },
+  { year:'2025', ref:'Q1(g)(iv)',  spec:'N5DM 8.5'  }, { year:'2025', ref:'Q2(a)',        spec:'N5DM 1.1'  },
+  { year:'2025', ref:'Q2(b)',      spec:'N5DM 1.2'  }, { year:'2025', ref:'Q2(c)',        spec:'N5DM 1.3'  },
+  { year:'2025', ref:'Q3',         spec:'N5DM 2.1'  }, { year:'2025', ref:'Q4(a)(i)',     spec:'N5DM 3.1'  },
+  { year:'2025', ref:'Q4(a)(ii)',  spec:'N5DM 3.2'  }, { year:'2025', ref:'Q4(b)(i)',    spec:'N5DM 3.4'  },
+  { year:'2025', ref:'Q4(b)(ii)', spec:'N5DM 4.2'  }, { year:'2025', ref:'Q5(a)',        spec:'N5DM 5.2'  },
+  { year:'2025', ref:'Q5(b)',      spec:'N5DM 5.4'  }, { year:'2025', ref:'Q5(c)',        spec:'N5DM 5.4'  },
+  { year:'2025', ref:'Q6(a)',      spec:'N5DM 5.3'  }, { year:'2025', ref:'Q6(b)',        spec:'N5DM 5.5'  },
+  { year:'2025', ref:'Q7(a)(i)',   spec:'N5DM 8.1'  }, { year:'2025', ref:'Q7(a)(ii)',   spec:'N5DM 7.1'  },
+  { year:'2025', ref:'Q7(b)',      spec:'N5DM 10.2' }, { year:'2025', ref:'Q7(c)',        spec:'N5DM 10.5' },
+  { year:'2025', ref:'Q8(a)',      spec:'N5DM 10.10'}, { year:'2025', ref:'Q8(b)',        spec:'N5DM 11.3' },
+  { year:'2025', ref:'Q9',         spec:'N5DM 10.6' }, { year:'2025', ref:'Q10',          spec:'N5DM 11.1' },
+  // 2024
+  { year:'2024', ref:'Q1(a)(i)',   spec:'N5DM 6.3'  }, { year:'2024', ref:'Q1(a)(ii)',   spec:'N5DM 6.3'  },
+  { year:'2024', ref:'Q1(b)(i)',   spec:'N5DM 6.4'  }, { year:'2024', ref:'Q1(b)(ii)',   spec:'N5DM 9.3'  },
+  { year:'2024', ref:'Q1(b)(iii)',spec:'N5DM 6.4'  }, { year:'2024', ref:'Q1(c)(i)',    spec:'N5DM 8.3'  },
+  { year:'2024', ref:'Q1(c)(ii)', spec:'N5DM 8.3'  }, { year:'2024', ref:'Q1(c)(iii)', spec:'N5DM 8.3'  },
+  { year:'2024', ref:'Q1(c)(iv)', spec:'N5DM 8.5'  }, { year:'2024', ref:'Q1(d)(i)',    spec:'N5DM 6.2'  },
+  { year:'2024', ref:'Q1(d)(ii)', spec:'N5DM 7.5'  }, { year:'2024', ref:'Q1(d)(iii)', spec:'N5DM 7.5'  },
+  { year:'2024', ref:'Q1(d)(iv)', spec:'N5DM 6.7'  }, { year:'2024', ref:'Q1(e)(i)',    spec:'N5DM 7.2'  },
+  { year:'2024', ref:'Q1(e)(ii)', spec:'N5DM 7.4'  }, { year:'2024', ref:'Q1(e)(iii)', spec:'N5DM 7.7'  },
+  { year:'2024', ref:'Q1(f)',      spec:'N5DM 7.6'  }, { year:'2024', ref:'Q2',          spec:'N5DM 1.2'  },
+  { year:'2024', ref:'Q3(a)',      spec:'N5DM 2.2'  }, { year:'2024', ref:'Q3(b)',        spec:'N5DM 2.1'  },
+  { year:'2024', ref:'Q4(a)(i)',   spec:'N5DM 4.3'  }, { year:'2024', ref:'Q4(a)(ii)',   spec:'N5DM 4.4'  },
+  { year:'2024', ref:'Q4(b)(i)',   spec:'N5DM 3.3'  }, { year:'2024', ref:'Q5(a)',        spec:'N5DM 5.1'  },
+  { year:'2024', ref:'Q5(b)',      spec:'N5DM 5.3'  }, { year:'2024', ref:'Q6(a)',        spec:'N5DM 5.2'  },
+  { year:'2024', ref:'Q6(b)',      spec:'N5DM 5.4'  }, { year:'2024', ref:'Q7(a)',        spec:'N5DM 5.5'  },
+  { year:'2024', ref:'Q7(b)',      spec:'N5DM 5.6'  }, { year:'2024', ref:'Q8(a)(i)',    spec:'N5DM 7.1'  },
+  { year:'2024', ref:'Q8(a)(ii)', spec:'N5DM 8.2'  }, { year:'2024', ref:'Q8(b)',        spec:'N5DM 10.3' },
+  { year:'2024', ref:'Q8(c)',      spec:'N5DM 10.4' }, { year:'2024', ref:'Q9',           spec:'N5DM 11.2' },
+  { year:'2024', ref:'Q10',        spec:'N5DM 10.7' }, { year:'2024', ref:'Q11(a)',       spec:'N5DM 10.9' },
+  { year:'2024', ref:'Q11(b)',     spec:'N5DM 11.3' },
+  // 2023
+  { year:'2023', ref:'Q1(a)(i)',   spec:'N5DM 6.1'  }, { year:'2023', ref:'Q1(a)(ii)',   spec:'N5DM 9.3'  },
+  { year:'2023', ref:'Q1(b)(i)',   spec:'N5DM 6.4'  }, { year:'2023', ref:'Q1(b)(iv)',   spec:'N5DM 6.6'  },
+  { year:'2023', ref:'Q1(b)(v)',   spec:'N5DM 9.1'  }, { year:'2023', ref:'Q1(c)(i)',    spec:'N5DM 7.1'  },
+  { year:'2023', ref:'Q1(c)(ii)', spec:'N5DM 7.2'  }, { year:'2023', ref:'Q1(d)(i)',    spec:'N5DM 7.5'  },
+  { year:'2023', ref:'Q1(d)(ii)', spec:'N5DM 7.5'  }, { year:'2023', ref:'Q1(d)(iii)', spec:'N5DM 7.6'  },
+  { year:'2023', ref:'Q1(e)(i)',  spec:'N5DM 8.3'  }, { year:'2023', ref:'Q1(e)(ii)',   spec:'N5DM 8.5'  },
+  { year:'2023', ref:'Q2(a)',      spec:'N5DM 1.1'  }, { year:'2023', ref:'Q2(b)',        spec:'N5DM 1.3'  },
+  { year:'2023', ref:'Q3(a)',      spec:'N5DM 2.1'  }, { year:'2023', ref:'Q3(b)',        spec:'N5DM 2.2'  },
+  { year:'2023', ref:'Q4(a)',      spec:'N5DM 4.1'  }, { year:'2023', ref:'Q4(b)',        spec:'N5DM 4.2'  },
+  { year:'2023', ref:'Q4(c)',      spec:'N5DM 3.1'  }, { year:'2023', ref:'Q5',           spec:'N5DM 5.3'  },
+  { year:'2023', ref:'Q6(a)',      spec:'N5DM 5.4'  }, { year:'2023', ref:'Q6(b)',        spec:'N5DM 5.1'  },
+  { year:'2023', ref:'Q7(a)',      spec:'N5DM 5.2'  }, { year:'2023', ref:'Q7(b)',        spec:'N5DM 5.5'  },
+  { year:'2023', ref:'Q8(c)',      spec:'N5DM 10.1' }, { year:'2023', ref:'Q8(d)',        spec:'N5DM 10.4' },
+  { year:'2023', ref:'Q8(e)',      spec:'N5DM 10.2' }, { year:'2023', ref:'Q9(a)',        spec:'N5DM 10.8' },
+  { year:'2023', ref:'Q10',        spec:'N5DM 10.9' }, { year:'2023', ref:'Q11',          spec:'N5DM 11.1' },
+  // 2022
+  { year:'2022', ref:'Q1(b)(i)',   spec:'N5DM 6.4'  }, { year:'2022', ref:'Q1(c)(iii)', spec:'N5DM 9.2'  },
+  { year:'2022', ref:'Q1(d)(ii)', spec:'N5DM 8.4'  }, { year:'2022', ref:'Q1(e)(ii)',   spec:'N5DM 6.7'  },
+  { year:'2022', ref:'Q1(g)(i)',  spec:'N5DM 7.2'  }, { year:'2022', ref:'Q1(g)(ii)',   spec:'N5DM 7.4'  },
+  { year:'2022', ref:'Q1(g)(iii)',spec:'N5DM 7.7'  }, { year:'2022', ref:'Q2(a)',        spec:'N5DM 1.2'  },
+  { year:'2022', ref:'Q2(b)',      spec:'N5DM 1.1'  }, { year:'2022', ref:'Q3',           spec:'N5DM 2.1'  },
+  { year:'2022', ref:'Q4(a)',      spec:'N5DM 4.2'  }, { year:'2022', ref:'Q4(b)',        spec:'N5DM 4.3'  },
+  { year:'2022', ref:'Q5',         spec:'N5DM 3.1'  }, { year:'2022', ref:'Q6(a)',        spec:'N5DM 5.3'  },
+  { year:'2022', ref:'Q6(b)',      spec:'N5DM 5.1'  }, { year:'2022', ref:'Q7(a)',        spec:'N5DM 5.5'  },
+  { year:'2022', ref:'Q8',         spec:'N5DM 5.2'  }, { year:'2022', ref:'Q9(a)(i)',    spec:'N5DM 7.1'  },
+  { year:'2022', ref:'Q9(a)(ii)', spec:'N5DM 8.1'  }, { year:'2022', ref:'Q9(b)',        spec:'N5DM 10.2' },
+  { year:'2022', ref:'Q10(a)',     spec:'N5DM 10.6' }, { year:'2022', ref:'Q10(b)',       spec:'N5DM 11.3' },
+  { year:'2022', ref:'Q11(a)',     spec:'N5DM 10.10'}, { year:'2022', ref:'Q11(b)',       spec:'N5DM 11.2' },
+];
+
+const AVAILABLE_YEARS = ['2025','2024','2023','2022'];
+
+function getPaperURL(year) {
+  return `https://www.sqa.org.uk/pastpapers/papers/papers/${year}/N5_Design-and-Manufacture_QP_${year}.pdf`;
+}
+function getMSURL(year) {
+  return `https://www.sqa.org.uk/pastpapers/papers/instructions/${year}/mi_N5_Design-and-Manufacture_mi_${year}.pdf`;
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let studentName = '';
+let marks = QUESTIONS.map(() => '');
+let radarChart = null;
+
+const TOTAL_MARKS = QUESTIONS.reduce((a, q) => a + q.max, 0);
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function normCode(c) { return c.replace(/\s+/g,'').toUpperCase(); }
+
+function getSpecDesc(code) {
+  for (const group of Object.values(SPEC)) {
+    for (const [k, v] of Object.entries(group.outcomes)) {
+      if (normCode(k) === normCode(code)) return v;
+    }
+  }
+  return null;
+}
+
+function getTopicData() {
+  const topics = {};
+  QUESTIONS.forEach((q, i) => {
+    const gc = normCode(q.spec);
+    if (!topics[gc]) topics[gc] = { earned:0, possible:0 };
+    const v = parseFloat(marks[i]);
+    topics[gc].earned += (isNaN(v) ? 0 : Math.min(v, q.max));
+    topics[gc].possible += q.max;
+  });
+  return topics;
+}
+
+function getGroupData() {
+  const topicData = getTopicData();
+  const groups = {};
+  for (const [gk, gd] of Object.entries(SPEC)) {
+    let earned = 0, possible = 0;
+    const outData = {};
+    for (const [oc] of Object.entries(gd.outcomes)) {
+      const nc = normCode(oc);
+      const td = topicData[nc] || { earned:0, possible:0 };
+      earned += td.earned;
+      possible += td.possible;
+      outData[oc] = td;
+    }
+    if (possible > 0) groups[gk] = { gd, earned, possible, outData };
+  }
+  return groups;
+}
+
+function colour(pct) {
+  if (pct >= 70) return 'green';
+  if (pct >= 50) return 'amber';
+  return 'red';
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (!studentName) { renderName(app); return; }
+  renderMarks(app);
+}
+
+function renderName(app) {
+  app.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h1>N5 Design &amp; Manufacture · Prelim</h1>
+        <p>George Watson's College · 2026</p>
+      </div>
+      <div class="name-step">
+        <h2>Enter your name to get started</h2>
+        <p>You'll enter your marks and get a personalised breakdown by spec topic.</p>
+        <input class="name-input" id="name-input" type="text" placeholder="Your name" autocomplete="off"
+          onkeydown="if(event.key==='Enter')startEntry()">
+        <br>
+        <button class="btn-start" onclick="startEntry()">Start entering marks →</button>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('name-input')?.focus(), 50);
+}
+
+function startEntry() {
+  const v = document.getElementById('name-input')?.value?.trim();
+  if (!v) return;
+  studentName = v;
+  render();
+}
+
+function renderMarks(app) {
+  const earned = marks.reduce((a, m, i) => {
+    const v = parseFloat(m);
+    return a + (isNaN(v) ? 0 : Math.min(v, QUESTIONS[i].max));
+  }, 0);
+  const pct = Math.round(earned / TOTAL_MARKS * 100);
+  const filled = marks.filter(m => m !== '').length;
+
+  const rows = QUESTIONS.map((q, i) => {
+    const v = marks[i];
+    const isOver = parseFloat(v) > q.max;
+    const desc = getSpecDesc(q.spec) || '';
+    const shortDesc = desc.length > 70 ? desc.slice(0,68)+'…' : desc;
+    return `<div class="q-row">
+      <span class="q-label">${q.label}</span>
+      <div class="q-spec-cell">
+        <span class="q-spec">${q.spec}</span>
+        <span class="q-spec-desc" title="${desc}">${shortDesc}</span>
+      </div>
+      <div class="q-entry">
+        <input class="q-input${isOver?' over':''}" id="q-inp-${i}" type="number"
+          min="0" max="${q.max}" step="0.5" value="${v}"
+          oninput="updateMark(${i},this.value)"
+          onkeydown="if(event.key==='Enter'||event.key==='ArrowDown'){event.preventDefault();document.getElementById('q-inp-${i+1}')?.focus();}"
+          onkeydown="navKey(event,${i})">
+        <span class="q-max">/ ${q.max}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <h1>N5 Design &amp; Manufacture · Prelim</h1>
+        <p>George Watson's College · 2026 — Enter your marks below</p>
+      </div>
+      <div class="card-body">
+        <div class="section-label">Your marks — ${TOTAL_MARKS} marks total</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${Math.round(filled/QUESTIONS.length*100)}%"></div>
+        </div>
+        <div class="questions-grid">${rows}</div>
+        <div class="totals-row">
+          <div>
+            <div class="total-score">${earned} / ${TOTAL_MARKS}</div>
+            <div class="total-pct">${pct}% · ${filled} of ${QUESTIONS.length} questions entered</div>
+          </div>
+        </div>
+        <button class="btn-report" onclick="showReport()" ${filled===0?'disabled':''}>
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Show my topic breakdown
+        </button>
+      </div>
+    </div>`;
+  setTimeout(() => document.getElementById('q-inp-0')?.focus(), 50);
+}
+
+function navKey(event, i) {
+  if (event.key === 'Enter' || event.key === 'ArrowDown') {
+    event.preventDefault();
+    document.getElementById(`q-inp-${i+1}`)?.focus();
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    document.getElementById(`q-inp-${i-1}`)?.focus();
+  }
+}
+
+function updateMark(i, v) {
+  marks[i] = v;
+  const inp = document.getElementById(`q-inp-${i}`);
+  if (inp) inp.classList.toggle('over', parseFloat(v) > QUESTIONS[i].max);
+  const earned = marks.reduce((a, m, j) => {
+    const n = parseFloat(m); return a + (isNaN(n)?0:Math.min(n,QUESTIONS[j].max));
+  }, 0);
+  const pct = Math.round(earned / TOTAL_MARKS * 100);
+  const filled = marks.filter(m => m !== '').length;
+  const ts = document.querySelector('.total-score');
+  const tp = document.querySelector('.total-pct');
+  const btn = document.querySelector('.btn-report');
+  const pb = document.querySelector('.progress-bar-fill');
+  if (ts) ts.textContent = `${earned} / ${TOTAL_MARKS}`;
+  if (tp) tp.textContent = `${pct}% · ${filled} of ${QUESTIONS.length} questions entered`;
+  if (btn) btn.disabled = filled === 0;
+  if (pb) pb.style.width = `${Math.round(filled/QUESTIONS.length*100)}%`;
+}
+
+function showReport() {
+  const app = document.getElementById('app');
+  const earned = marks.reduce((a, m, i) => {
+    const v = parseFloat(m); return a + (isNaN(v)?0:Math.min(v,QUESTIONS[i].max));
+  }, 0);
+  const pct = Math.round(earned / TOTAL_MARKS * 100);
+
+  const groupData = getGroupData();
+  const ranked = Object.entries(groupData)
+    .map(([gk,{gd,earned:ge,possible:gp,outData}]) => {
+      const grpPct = gp>0 ? Math.round(ge/gp*100) : 0;
+      const gc = colour(grpPct);
+      return {gk,gd,ge,gp,grpPct,gc,outData};
+    })
+    .sort((a,b) => a.grpPct - b.grpPct);
+
+  const priority = ranked.filter(r => r.gc==='red');
+  const developing = ranked.filter(r => r.gc==='amber');
+  const secure = ranked.filter(r => r.gc==='green');
+
+  const accordionHtml = ranked.map(({gk,gd,ge,gp,grpPct,gc,outData}) => {
+    const id = `acc-${gk}`;
+    const chevId = `chev-${gk}`;
+    const ppForGroup = PAPER_BANK.filter(pb => {
+      const pbc = normCode(pb.spec);
+      return Object.keys(gd.outcomes).some(oc => normCode(oc) === pbc);
+    });
+    const ppByYear = {};
+    ppForGroup.forEach(pb => { (ppByYear[pb.year]||(ppByYear[pb.year]=[])).push(pb); });
+
+    const subRows = Object.entries(gd.outcomes).map(([oc, desc]) => {
+      const td = outData[oc] || {earned:0,possible:0};
+      const opct = td.possible>0 ? Math.round(td.earned/td.possible*100) : null;
+      const scoreHtml = td.possible>0
+        ? `<div><div class="outcome-score" style="color:${opct>=70?'var(--green)':opct>=50?'var(--amber)':'var(--red)'}">${opct}%</div><div class="outcome-frac">${td.earned}/${td.possible}</div></div>`
+        : `<div class="outcome-frac" style="color:var(--ink-light)">not tested</div>`;
+
+      const ppRefs = ppForGroup.filter(pb => normCode(pb.spec)===normCode(oc));
+      // Pick pill colour from this outcome's score
+      const pillCol = td.possible > 0
+        ? (Math.round(td.earned/td.possible*100) >= 70 ? {border:'#1a7a42', bg:'#dcf5e8', text:'#1a7a42'}
+          : Math.round(td.earned/td.possible*100) >= 50 ? {border:'#b45309', bg:'#fef3c7', text:'#92400e'}
+          : {border:'#c53030', bg:'#fff0f0', text:'#c53030'})
+        : {border:'#94a3b8', bg:'#f8fafc', text:'#64748b'};
+      const ppHtml = ppRefs.length > 0
+        ? `<div class="pp-section">
+            <div class="pp-label"><svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:var(--subject);fill:none;stroke-width:2.5;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg><span class="pp-label-text">Past paper practice</span></div>
+            <div class="pp-pills">${Object.entries(ppByYear).filter(([yr]) => ppRefs.some(r=>r.year===yr)).map(([yr,refs])=>{
+              const yrRefs = refs.filter(r=>normCode(r.spec)===normCode(oc));
+              if(!yrRefs.length) return '';
+              return `<div class="pp-pill" style="border:1.5px solid ${pillCol.border}"><a class="qp" style="background:${pillCol.bg};color:${pillCol.text};" href="${getPaperURL(yr)}" target="_blank" rel="noopener">📄 ${yr} — ${yrRefs.map(r=>r.ref).join(', ')}</a><a class="ms" href="${getMSURL(yr)}" target="_blank" rel="noopener">✓ MI</a></div>`;
+            }).join('')}</div>
+          </div>`
+        : `<div class="pp-section"><span class="pp-none">No past paper questions matched to this outcome</span></div>`;
+
+      return `<div class="outcome-row">
+        <div>
+          <div class="outcome-code">${oc}</div>
+          <div class="outcome-desc">${desc}</div>
+        </div>
+        ${scoreHtml}
+      </div>${ppHtml}`;
+    }).join('');
+
+    return `<div class="acc-section">
+      <div class="acc-header" onclick="toggleAcc('${id}','${chevId}')">
+        <div class="acc-dot ${gc}"></div>
+        <div class="acc-title">
+          <div class="acc-title-top">
+            <span class="acc-code">${gk}</span>
+            <span class="acc-name">${gd.label}</span>
+          </div>
+          <div class="acc-bar-row"><div class="acc-bar-fill ${gc}" style="width:${grpPct}%"></div></div>
+        </div>
+        <span class="acc-pct ${gc}">${grpPct}%</span>
+        <span class="acc-status ${gc}">${gc==='green'?'Secure':gc==='amber'?'Developing':'Priority'}</span>
+        <svg id="${chevId}" class="acc-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div id="${id}" class="acc-body">${subRows}</div>
+    </div>`;
+  }).join('');
+
+  const topicBarsHtml = ranked.map(({gd,grpPct,gc}) => {
+    const col = gc==='green'?'var(--green)':gc==='amber'?'var(--amber)':'var(--red)';
+    return `<div class="topic-bar-row">
+      <span class="topic-bar-label" title="${gd.label}">${gd.label}</span>
+      <div class="topic-bar-track"><div class="topic-bar-fill" style="width:${grpPct}%;background:${col}"></div></div>
+      <span class="topic-bar-pct" style="color:${col}">${grpPct}%</span>
+    </div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="card">
+      <div class="result-banner">
+        <div>
+          <div class="result-name">${studentName}</div>
+          <div class="result-meta">N5 Design &amp; Manufacture · George Watson's Prelim 2026</div>
+        </div>
+        <div>
+          <div class="result-pct">${pct}%</div>
+          <div class="result-marks">${earned} / ${TOTAL_MARKS} marks</div>
+        </div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-cell">
+          <div class="summary-num" style="color:var(--red)">${priority.length}</div>
+          <div class="summary-label">Priority topics</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-num" style="color:var(--amber)">${developing.length}</div>
+          <div class="summary-label">Developing</div>
+        </div>
+        <div class="summary-cell">
+          <div class="summary-num" style="color:var(--green)">${secure.length}</div>
+          <div class="summary-label">Secure</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-cell">
+          <div class="chart-title">Performance by topic</div>
+          <canvas id="radar-chart"></canvas>
+        </div>
+        <div class="chart-cell">
+          <div class="chart-title">Topic breakdown</div>
+          ${topicBarsHtml}
+        </div>
+      </div>
+
+      <div id="acc-instruction-bar" style="padding:0.75rem 1.25rem;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.75rem;font-weight:600;color:var(--ink-mid);">Click any topic to see spec outcomes and SQA past paper practice questions</span>
+        <div style="display:flex;gap:0.4rem;">
+          <button onclick="expandAll()" style="font-size:0.68rem;padding:0.22rem 0.6rem;border:1px solid var(--border-mid);border-radius:var(--radius-sm);background:white;cursor:pointer;font-family:var(--font);">Expand all</button>
+          <button onclick="collapseAll()" style="font-size:0.68rem;padding:0.22rem 0.6rem;border:1px solid var(--border-mid);border-radius:var(--radius-sm);background:white;cursor:pointer;font-family:var(--font);">Collapse all</button>
+        </div>
+      </div>
+
+      ${accordionHtml}
+
+      <div class="resources-footer">
+        <div>
+          <div class="section-label" style="margin-bottom:0.4rem;">SQA past papers</div>
+          <div class="res-links">
+            ${AVAILABLE_YEARS.slice(0,2).map(yr => `
+              <a class="res-link" href="${getPaperURL(yr)}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+                ${yr} QP
+              </a>
+              <a class="res-link dim" href="${getMSURL(yr)}" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M9 11l3 3L22 4"/></svg>
+                ${yr} MI
+              </a>`).join('')}
+            <a class="res-link dim" href="https://www.sqa.org.uk/pastpapers/findpastpaper.htm?subject=Design+and+Manufacture&level=N5" target="_blank" rel="noopener">All past papers ↗</a>
+          </div>
+        </div>
+        <div class="btn-print-wrap">
+          <button class="btn-print" onclick="window.print()">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-retake" onclick="goBack()">← Edit my marks</button>
+  `;
+
+  setTimeout(() => {
+    const canvas = document.getElementById('radar-chart');
+    if (!canvas || !window.Chart) return;
+    if (radarChart) radarChart.destroy();
+    const labels = ranked.map(r => r.gd.label.replace('Design Factors','Design\nFactors').split(' ').slice(0,2).join(' '));
+    const data = ranked.map(r => r.grpPct);
+    const borders = ranked.map(r => r.gc==='green'?'#1a7a42':r.gc==='amber'?'#b45309':'#c53030');
+    canvas.style.maxHeight = '220px';
+    radarChart = new Chart(canvas, {
+      type:'radar',
+      data:{ labels, datasets:[{ data, backgroundColor:'rgba(124,58,237,0.1)', borderColor:'#7c3aed', pointBackgroundColor: borders, pointRadius:4, borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:true, aspectRatio:1, scales:{ r:{ min:0, max:100, ticks:{ stepSize:25, font:{size:9}, color:'#8896a5' }, pointLabels:{ font:{size:9,family:"'Plus Jakarta Sans',sans-serif"}, color:'#4a5568' }, grid:{ color:'rgba(0,0,0,0.06)' }, angleLines:{ color:'rgba(0,0,0,0.08)' } } }, plugins:{ legend:{ display:false } } }
+    });
+  }, 100);
+}
+
+function toggleAcc(id, chevId) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById(chevId);
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function expandAll() {
+  document.querySelectorAll('.acc-body').forEach(b => b.classList.add('open'));
+  document.querySelectorAll('.acc-chevron').forEach(c => c.style.transform = 'rotate(180deg)');
+}
+
+function collapseAll() {
+  document.querySelectorAll('.acc-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.acc-chevron').forEach(c => c.style.transform = '');
+}
+
+function goBack() { render(); }
+
+render();
+</script>
+</body>
+</html>
